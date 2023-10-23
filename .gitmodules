@@ -1,2 +1,5 @@
 [submodule "libs/OMAACS_NUM/"]
 	url = git@github.com:euraposis/OMAACS_NUM.git
+[submodule "libs/OMAACS_NUM"]
+	path = libs/OMAACS_NUM
+	url = https://github.com/euraposis/OMAACS_NUM.git
