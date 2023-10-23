@@ -8,7 +8,7 @@ This Projects primary function is to design a basic simulator to experiment with
 
 We recommend using WSL-Ubuntu-20.04 for developement. Installing WSL and distro will not be covered in this tutorial.
 
-----
+
 
 ### Cloning
 
