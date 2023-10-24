@@ -1,6 +1,6 @@
 ![](img/OMAACS_LOGO.jpg)
 
-# Orbital Mechanics and Attitude Simulator (OMAACS)
+# Orbital Mechanics and Attitude Control Simulator (OMAACS)
 
 This Projects primary function is to design a basic simulator to experiment with orbital mechanics and attitude control systems, primarily for satellites in orbit around earth.
 
