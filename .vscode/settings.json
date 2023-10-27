@@ -2,7 +2,6 @@
   "files.associations": {
     "stdio.h": "c",
     "unity.h": "c",
-    "math.h": "c",
-    "numerics.h": "c"
+    "math.h": "c"
   }
 }
