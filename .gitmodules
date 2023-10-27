@@ -2,3 +2,9 @@
 	path = libs/OMAACS_NUM
 	url = https://github.com/euraposis/OMAACS_NUM.git
   branch= master
+[submodule "libs/--force"]
+	path = libs/--force
+	url = https://github.com/euraposis/OMAACS_ORB
+[submodule "libs/OMAACS_ORB"]
+	path = libs/OMAACS_ORB
+	url = https://github.com/euraposis/OMAACS_ORB
