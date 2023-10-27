@@ -1,0 +1,6 @@
+#ifndef OMAACS_ORBITAL_MECHANICS_H
+#define OMAACS_ORBITAL_MECHANICS_H
+
+
+
+#endif
