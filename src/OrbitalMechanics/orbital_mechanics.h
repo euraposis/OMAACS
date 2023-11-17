@@ -4,25 +4,30 @@
 #include "../../libs/OMAACS_NUM/OMAACS_NUM/src/vector.h"
 
 #include "math.h"
+#include <stdio.h>
 
 #define GAMMA 6.67430e-11
+
+#define IN_DEGREES (180/M_PI)
+#define _KM * 1000
 
 typedef struct Body
 {
   vector_3 position;
   long double mass;
+  long double gravitational_parameter;
 } Body;
 
-static Body Earth = {.mass = 5.973e24};
+static Body Earth = {.mass = 5.973e24, .gravitational_parameter = 3.986004415e14};
 
 typedef struct KeplerianElements
 {
-  double a; // semi-major axis
-  double e; // eccentricity
-  double i; // inclination
-  double Omega; // longitude of the ascending node
-  double omega; // argument of periapsis
-  double nu; // true anomaly
+  long double semi_major_axis; // semi-major axis
+  long double eccentricity; // eccentricity
+  long double inclination; // inclination
+  long double longitude_asc_node; // longitude of the ascending node
+  long double arg_periapsis; // argument of periapsis
+  long double true_anomaly; // true anomaly
 } KeplerianElements;
   
 typedef struct CartesianElements
@@ -31,7 +36,23 @@ typedef struct CartesianElements
   vector_3 v;
 } CartesianElements;
 
-KeplerianElements keplerian_elements_from_cartesian_elements(CartesianElements state, Body* orbiting_body)
+
+void print_kepler(KeplerianElements* elements, unsigned int in_deg, unsigned int in_km)
+{
+  
+  printf("\n\n");
+  printf("Keplerian Elements:\n");
+  printf("====================================================\n");
+  printf("semi_major_axis                 | %Lf %s\n", elements->semi_major_axis*(in_km?(long double)1/1000:1), in_km?"km":"m");
+  printf("excentricity                    | %Lf\n", elements->eccentricity);
+  printf("inclination                     | %Lf %s\n", elements->inclination*(in_deg?IN_DEGREES:1), in_deg?"deg":"rad" );
+  printf("longitude of the ascending node | %Lf %s\n", elements->longitude_asc_node * (in_deg?IN_DEGREES:1), in_deg?"deg":"rad");
+  printf("arguments of periapsis          | %Lf %s\n", elements->arg_periapsis * (in_deg?IN_DEGREES:1), in_deg?"deg":"rad");
+  printf("true anomaly                    | %Lf %s\n", elements->true_anomaly * (in_deg?IN_DEGREES:1), in_deg?"deg":"rad");
+  printf("====================================================\n");
+}
+
+KeplerianElements keplerian_elements_from_cartesian_elements(CartesianElements state, const Body* orbiting_body)
 {
   printf("Calculate Keplarian Elemenets from catesian state\n");
   printf("position: (%Lf, %Lf, %Lf)\n", state.r.x, state.r.y, state.r.z);
@@ -42,45 +63,13 @@ KeplerianElements keplerian_elements_from_cartesian_elements(CartesianElements s
     specific_angular_momentum.y,\
     specific_angular_momentum.z);
 
-  long double gamma = GAMMA * orbiting_body->mass;
+  long double gamma = orbiting_body->gravitational_parameter;
 
-  printf("calculating specific energy\n");
+  printf("calculatin semi-major axis\n");
 
-  long double specific_energy = ((vector_3_dot(state.v, state.v))/2) - (gamma/vector_3_mag(state.r));
+  long double semi_major_axis = 1/(2/vector_3_mag(state.r) - vector_3_mag(state.v)*vector_3_mag(state.v)/gamma);
 
-  printf("specific energy: %Lf\n", specific_energy);
-
-  printf("calculating semi major axis\n");
-
-  long double semi_major_axis = -gamma/(2*specific_energy);
-
-  printf("semi major axis: %Lf\n", semi_major_axis);
-
-  printf("calculating trayectory parameter\n");
-
-  long double trayectory_parameter = pow(vector_3_mag(specific_angular_momentum), 2.0)/gamma;
-
-  printf("trayectory parameter: %Lf\n", trayectory_parameter);
-
-  printf("calculating excentricity\n");
-
-  long double excentricity = sqrt(1 -  (pow(vector_3_mag(specific_angular_momentum), 2)/(gamma * semi_major_axis)));
-
-  printf("excentricity: %Lf\n", excentricity);
-
-  printf("calculating peri- and apoapsis\n");
-
-  long double periapsis = semi_major_axis * (1 - excentricity);
-  long double apoapsis = semi_major_axis * (1 + excentricity);
-
-  printf("orbit from %Lf to %Lf\n", periapsis, apoapsis);
-
-  printf("calculating periode\n");
-
-  long double periode = 2 * M_PI * sqrt(pow(semi_major_axis, 3)/gamma);
-
-  printf("periode: %Lf\n", periode/60);
-  
+  printf("semi-major axis: %Lf\n", semi_major_axis);
 
   printf("calculating inclination\n");
 
@@ -93,7 +82,12 @@ KeplerianElements keplerian_elements_from_cartesian_elements(CartesianElements s
   vector_3 K = {.x = 0, .y = 0, .z = 1};
   vector_3 I = {.x = 1, .y = 0, .z = 0};
 
-  long double longitude_of_the_ascending_node = acos(vector_3_dot(vector_3_cross(K, specific_angular_momentum), I)/vector_3_mag(vector_3_cross(K, specific_angular_momentum)));
+  long double longitude_of_the_ascending_node = acos(vector_3_dot(vector_3_cross(K, specific_angular_momentum), I)/(vector_3_mag(vector_3_cross(K, specific_angular_momentum)) * vector_3_mag(I)));
+
+  if (specific_angular_momentum.x < 0)
+  {
+    longitude_of_the_ascending_node = 2*M_PI - longitude_of_the_ascending_node;
+  }
 
   printf("longitude of the ascending node: %Lf\n", longitude_of_the_ascending_node);
 
@@ -107,11 +101,25 @@ KeplerianElements keplerian_elements_from_cartesian_elements(CartesianElements s
 
   long double argument_of_periapsis = acos(vector_3_dot(vector_3_cross(K, specific_angular_momentum), excentricity_vector)/(vector_3_mag(vector_3_cross(K, specific_angular_momentum))* vector_3_mag(excentricity_vector)));
 
+  if (excentricity_vector.z < 0)
+  {
+    argument_of_periapsis = 2*M_PI - argument_of_periapsis;
+  }
+
   printf("argument of periapsis: %Lf\n", argument_of_periapsis);
 
   long double true_anomaly = acos(vector_3_dot(state.r, excentricity_vector)/(vector_3_mag(state.r) * vector_3_mag(excentricity_vector)));
 
+  if (vector_3_dot(state.r, state.v) < 0)
+  {
+    true_anomaly = 2*M_PI - true_anomaly;
+  }
+
   printf("true anomaly: %Lf\n", true_anomaly);
+
+  KeplerianElements elements = {.semi_major_axis = semi_major_axis, .eccentricity = vector_3_mag(excentricity_vector), .inclination = inclination, .longitude_asc_node = longitude_of_the_ascending_node, .arg_periapsis = argument_of_periapsis, .true_anomaly = true_anomaly};
+
+  return elements;
 }
 
 #endif
